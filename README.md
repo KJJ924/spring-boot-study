@@ -65,7 +65,8 @@ Spring boot 을 실행 할때 우리는 `@SpringBootApplication` 애노테이션
 
 `@SpringBootApplication`  애노테이션을 알아보자
 
-![image-20210109003107544](C:\Users\dkans\AppData\Roaming\Typora\typora-user-images\image-20210109003107544.png)
+![image](https://user-images.githubusercontent.com/64793712/104036850-44fba500-5217-11eb-92df-63cb7f774be2.png)
+
 
 여기서 핵심은 
 
