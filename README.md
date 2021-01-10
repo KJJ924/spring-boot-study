@@ -288,3 +288,251 @@ public class ApplicationRunner implements org.springframework.boot.ApplicationRu
 
 ![image](https://user-images.githubusercontent.com/64793712/104124849-646d0c00-5396-11eb-9d94-1fc278208145.png)
 
+
+
+
+------
+
+## 5. 자동 설정 만들기 2부
+
+
+
+그럼 여기서 하나의 의문이 생긴다.
+
+
+
+AutoConfiguration 으로 등록되는 빈은 수정이 되지 않는가?  -> 일단은 그렇지 않다.
+
+
+
+얼마든지 사용자가 커스텀을 통해 객체를 수정 할 수 있다. 다만 몇 가지의 설정이 필요하다.
+
+
+
+일단 Bean을 오버라이딩 하여  기본 프로젝트에서 재정의 해보자.
+
+```java
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication springApplication = new SpringApplication(DemoApplication.class);
+        springApplication.setWebApplicationType(WebApplicationType.NONE);
+        springApplication.run(args);
+    }
+
+    //  재준을 다시 재정의 해보자.
+    @Bean
+    JaeJoon jaeJoon (){
+        return new JaeJoon("김재준",27);
+    }
+
+}
+```
+
+
+
+나의 예상대로면 26살이던 재준이는 27살로 print 되어야 한다. 
+
+
+
+우리의 예상대로 흘러가지 않는다.
+
+
+
+스프링 부트 2.1 이상부터는 다음과 같은 오류를 만나 볼 수 있다.
+
+![image](https://user-images.githubusercontent.com/64793712/104128914-8aea7180-53ad-11eb-8ed4-c870d36fd4d3.png)
+
+오류를 읽어보자면 빈의 재정의를 금지 하고있다.  
+
+
+
+해결 하기위해 아래의 Action 이 시키는 대로 해보자.
+
+
+
+application.properties 파일에   다음과 같이 추가해보자 !
+
+```properties
+spring.main.allow-bean-definition-overriding=true
+```
+
+![image](https://user-images.githubusercontent.com/64793712/104129070-54f9bd00-53ae-11eb-8b5d-c0efe4ce1c19.png)
+
+
+
+그럼 시키는대로 했으니 과연 나이가 27살로 변경 되었을까? 다시 실행해보자.
+
+![image](https://user-images.githubusercontent.com/64793712/104129123-8ecac380-53ae-11eb-954b-68cb0a34111b.png)
+
+
+
+어림도 없다. 여전히 26살로 나온다.
+
+
+
+왜 아직도 재준이는 26살 일까?
+
+
+
+이 의문에 대한 답은 위에서 정리한 내용에서 찾을 수 있다.
+
+
+
+#### **3.자동설정의 이해 부분** 을 다시 보자
+
+
+
+*어? 그러면은 `@EnableAutoConfiguration` , `@ComponentScan` 둘 중 누가 먼저 실행되어 빈을 등록 할까?*
+
+*1단계: @ComponentScan*
+
+*2단계: @EnableAutoConfiguratio*
+
+*순으로 실행되어 빈을 등록한다.           **이 부분은 중요하니 꼭 기억하자 !***  
+
+
+
+같이 설명 하고 있다.
+
+
+
+내가 정의 새로 정의한  다음과 같은 코드는 @ComponentScan 에서 이미 등록이 끝난다.
+
+```java
+  //  재준을 다시 재정의 해보자.
+    @Bean
+    JaeJoon jaeJoon (){
+        return new JaeJoon("김재준",27);
+    }
+```
+
+
+
+하지만 @EnableAutoConfiguratio이 빈을 등록하는 차례에서 다시  재준이는 26살로 다시 돌아간다.
+
+
+
+이제 이러한 문제을 다시 해결해보자
+
+
+
+- #### **`@ConditionalOnMissingBean` 애노테이션 을 통한 해결.**
+
+영어 뜻 그대로 해당 Bean 이 존재하지 않을때만 26살 재준이를 등록한다는 것이다. 
+
+
+
+다음과 같이 JaeJoon.spring.boot.starter  프로젝트 로 돌아와서 셋팅해주면된다.
+
+```java
+@Configuration
+public class JaeJoonConfig {
+
+    @Bean
+    @ConditionalOnMissingBean  // 이거 추가해주면 OK ! !
+    JaeJoon jaeJoon(){
+        return new JaeJoon("김재준",26);
+    }
+}
+
+```
+
+
+
+그럼 다시 springboot 를 실행시키면 27살 재준이를 만날 수 있다.
+
+![image](https://user-images.githubusercontent.com/64793712/104129670-65129c00-53b0-11eb-9465-db95310921e6.png)
+
+
+
+
+
+다 좋은데 너무 불편하다.
+
+JaeJoon 의 나이만 변경할려고  JaeJoon 의 Bean 일일이 빈설정을 통해서만 변경이 가능한건가?  -> 아니다  방법이 있다.
+
+
+
+- #### **properties 을 통한 초기값 세팅**
+
+  다음과 같이 springboot 프로젝트에 있는 **`application.properties`** 를 이용하여 값을 쉽게 변경해보자.
+
+  ```properties
+  jaejoon.age=27
+  jaejoon.name=김재준
+  ```
+
+  위 행동처럼 작동하기 위해 JaeJoon.spring.boot.starter 에서 다시 셋팅을 해보자.
+
+  
+
+  일단 properties 을 받을 수 있는 Class 하나를 정의 해보자.
+
+  ```java
+  @ConfigurationProperties("jaejoon") // 
+  public class JaeJoonProperties {
+  
+      private String name;
+      private int age;
+  
+      public String getName() {
+          return name;
+      }
+  
+      public void setName(String name) {
+          this.name = name;
+      }
+  
+      public int getAge() {
+          return age;
+      }
+  
+      public void setAge(int age) {
+          this.age = age;
+      }
+  }
+  ```
+
+  
+
+  **@ConfigurationProperties(prefix string)**
+
+  ```properties
+  jaejoon.age=27
+  jaejoon.name=김재준 
+  ```
+
+  에서 prefix를 정의 해줘야하기때문에 jaejoon 이라고 값을 준 것 이다.
+
+  
+
+  이제 JaeJoonConfig 로와서 적용해보자.
+
+  ```java
+  @Configuration
+  @EnableConfigurationProperties(JaeJoonProperties.class) // JaeJoonProperties.class 를 사용하겠다.
+  public class JaeJoonConfig {
+  
+      @Bean
+      @ConditionalOnMissingBean // 빈이 없을때 application.properties 에 있는 값을 보고 Bean 을 생성하게 됨.
+      JaeJoon jaeJoon(JaeJoonProperties jaeJoonProperties){
+          JaeJoon jaeJoon = new JaeJoon();
+          jaeJoon.setName(jaeJoonProperties.getName());
+          jaeJoon.setAge(jaeJoonProperties.getAge());
+          return jaeJoon;
+      }
+  }
+  ```
+
+
+
+이제 Bean 을 재정의 하지 않아도 **`application.properties`** 통해 얼마든지 Bean의 값을 변경 할 수 있다.
+
+| 설정                                                         | 결과                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![image](https://user-images.githubusercontent.com/64793712/104130361-93de4180-53b3-11eb-8e64-3e3d4687c4d5.png) | ![image](https://user-images.githubusercontent.com/64793712/104130372-a35d8a80-53b3-11eb-9a90-5ee90becd1b8.png) |
+
+------
+
+
