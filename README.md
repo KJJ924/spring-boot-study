@@ -232,7 +232,7 @@ public class JaeJoonConfig {
 
 
 
-- **spring.factories **  
+- **spring.factories**  
   - **key : org.springframework.boot.autoconfigure.EnableAutoConfiguration**  
   - **value: FQCN(Fully Qualified Class Name)**
 
