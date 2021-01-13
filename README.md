@@ -759,4 +759,178 @@ public class DemoApplication {
 ![image](https://user-images.githubusercontent.com/64793712/104311929-3ebc4000-5519-11eb-9e68-c800a7d01815.png)
 
 
+---
+
+
+## **외부설정**(application.properties)
+
+
+
+이번 챕터에서는 **`application.properties`** 의 우선순위와 사용방법을 알아 볼 것이다.
+
+
+
+**프로퍼티(properties) 의 정의는 단순한 Key 와 Value 로 형태로 제공하는 Data이다.**
+
+
+
+**프로퍼티 우선 순위**
+
+1. [spring-boot-devtools](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools)를 활성화 시켰을 때 `$HOME/.config/spring-boot` 디렉토리에 안에서 제공하는 프로퍼티
+2. 테스트에 사용한 `@TestPropertySource`가 제공하는 프로퍼티
+3. `@SpringBootTest` 또는 슬라이스 테스트용 애노테이션의 `properties` 속성으로 제공하는 프로퍼티
+4. 커맨드 라인 아규먼트
+5. `SPRING_APPLICATION_JSON` 환경 변수 또는 시스템 프로퍼티에 인라인 JSON으로 정의되어 있는 프로퍼티
+6. ServletConfig 초기 매개변수
+7. ServletContext 초기 매개변수
+8. java:comp/env에 들어있는 JNDI 애트리뷰트
+9. 자바 시스템 프로퍼티 (System.getProperties())
+10. 운영체제 환경 변수
+11. `RandomValuePropertySource`. `random` 접두어를 가지고 있는 프로퍼티, `random.*` 에 무작위 값을 제공하는 프로퍼티 소스.
+12. JAR 패키지 외부에 있는 특정 프로파일용 애플리케이션 프로퍼티. (application-{profile}.properties 또는 YAML
+13. JAR 패키지 내부에 있는 특정 프로파일용 애플리케이션 프로퍼티. (application-{profile}.properties 또는 YAML
+14. JAR 패키지 외부에 있는 애플리케이션 프로퍼티. (application.properteis 또는 YAML)
+15. JAR 패키지 내부에 있는 애플리케이션 프로퍼티. (application.properteis 또는 YAML)
+16. `@Configuration` 클래스에 사용한 `@PropertySource`로 읽어들인 프로퍼티
+17. SpringApplication.setDefaultProperties()로 설정할 수 있는 기본 프로퍼티
+
+*(출처 : https://www.whiteship.me/spring-boot-external-config/)*
+
+
+
+자 그럼 다음과 같이 spring-boot 프로젝트를 생성했을때 resources 밑에 있는 apllication.properites 의 우선순위는 몇 위 인가?
+
+![image](https://user-images.githubusercontent.com/64793712/104452489-6c22ef80-55e6-11eb-8478-ca15416a6299.png)
+
+JAR 패키지 내부에 있는 애플리케이션 프로퍼티. (application.properteis 또는 YAML)  임으로 15위가 된다.
+
+
+
+### **사용방법**
+
+자 그러면  `application.properties` 안에   **키(key)와 값(value)** 를 등록하고 또 사용해보자.
+
+```properties
+test.projectName = testProject
+test.version = ${random.int}
+test.projectNameAndVersion=${test.projectName} ${test.version}
+```
+
+application.properties 에 다음과 같이 작성 해보자.
+
+
+
+${random.~~} 을 통하여 Random 한 인수 값을  Setting 할 수 있고
+
+
+
+Property Placeholders 를 이용하여 미리 정의 된  Value 값들을 이용할 수 도 있다.
+
+   
+
+간단한 외부설정이 끝났으니 외부설정을 사용해보자.
+
+```java
+@Value("${test.projectName}")
+String projectName;
+
+@Value("${test.version}")
+int version;
+
+@Value("${test.projectNameAndVersion}")
+String projectNameAndVersion;
+```
+
+다음과 같이 `@Value`  애노테이션을 이용하여 외부 프로퍼티 에 작성되어 있는 값을 참조하여 해당 변수에 할당 할 수 있다.
+
+
+
+
+
+**Test 코드 를 작성하면서 발생 할 수 있는 상황을 알아보자**
+
+
+
+만약 Test 코드를 작성한다고 하였을때 실제 서비스에 있는 `application.properties` 의 외부설정을 사용하고 싶지 않고
+
+Test 만의 `application.properties` 을 따로 두고 싶을땐 어떻게 해야 할까?
+
+
+
+```java
+@SpringBootTest
+class DemoApplicationTests {
+
+    @Autowired
+    Environment environment;
+    @Test
+    void propertiesTest() {
+        Assertions.assertThat(environment.getProperty("test.projectName")).isEqualTo("testCodeProject");
+    }
+
+}
+```
+
+이 코드 처럼 이제 test.projectName(key) 값이 testCodeProject(value) 값을 가지고 싶다.
+
+
+
+하지만 classPath:/ 밑에 있는 `application.properties` 의 파일은 지금 하나 이다. 따라서 위에 있는 Test 는 실패 할 것이다.
+
+
+
+따라서 Test classPath:/ 아래에 똑같이 `application.properties` 를 정의하여 사용해보자.
+
+![image](https://user-images.githubusercontent.com/64793712/104455463-a7bfb880-55ea-11eb-8da4-0c1681255e42.png)
+
+ 다음  `application.properties`  에  test.projectName(key) 에대한 value 값을 재 정의 해보자.
+
+```properties
+test.projectName = testCodeProject
+```
+
+
+
+그 다음  Test 를 실행하면?
+
+
+
+![image](https://user-images.githubusercontent.com/64793712/104456006-6a0f5f80-55eb-11eb-919c-3cddfd128972.png)
+
+오류가 발생 할 것이다.
+
+
+
+왜냐하면 test 밑에 있는 application.properties 가  원래 존재하고 있는 application.properties 를 오버라이딩 하기 때문에 
+
+```java
+@Value("${test.version}")
+int version;
+```
+
+이 코드에서 test.version 을 값을 찾을 수 없기때문이다. 
+
+
+
+이러한 문제점을 해결하기 위해선 test 밑에 있는  `applcation.properties` 랑 기존 사용하고 있는  `application.properties` 의  프로퍼티 값을 일치 해주면 되는데.
+
+
+
+매우 귀찮다.
+
+우리는 test.projectName 의 값만 변경하고싶은데 나머지 프로퍼티 값도 작성하는 것은 비효율 적이다.
+
+
+
+1. **`@TestPropertySource(properties = "")`**  를 이용하는 방법  배열로 여러가지의 프로퍼티 값을 재정의 할수 있습니다.
+
+   ![image-20210113221626403](C:\Users\dkans\AppData\Roaming\Typora\typora-user-images\image-20210113221626403.png)
+
+test 밑에있는 `application.properties` 을 삭제하고 `@TestPropertySource` 이용하여 해결할 수 있다.
+
+
+
+2. **@TestPropertySource(locations = "")** 배열로 여러개의 프로퍼티 값을 바꾸기 힘들 때  파일을 이용하여 재정의 할 수 도 있다.
+
+![image](https://user-images.githubusercontent.com/64793712/104457585-92985900-55ed-11eb-94a9-04b0b4ae24df.png)
 
