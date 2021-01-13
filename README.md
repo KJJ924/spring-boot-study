@@ -924,7 +924,7 @@ int version;
 
 1. **`@TestPropertySource(properties = "")`**  를 이용하는 방법  배열로 여러가지의 프로퍼티 값을 재정의 할수 있습니다.
 
-   ![image-20210113221626403](C:\Users\dkans\AppData\Roaming\Typora\typora-user-images\image-20210113221626403.png)
+   ![image](https://user-images.githubusercontent.com/64793712/104457970-0fc3ce00-55ee-11eb-8919-f799fcbb8cfa.png)
 
 test 밑에있는 `application.properties` 을 삭제하고 `@TestPropertySource` 이용하여 해결할 수 있다.
 
