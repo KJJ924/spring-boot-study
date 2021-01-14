@@ -934,3 +934,103 @@ test 밑에있는 `application.properties` 을 삭제하고 `@TestPropertySource
 
 ![image](https://user-images.githubusercontent.com/64793712/104457585-92985900-55ed-11eb-94a9-04b0b4ae24df.png)
 
+
+---
+
+## **외부설정 2부**
+
+
+
+앞에서 살펴봤던 외부프로퍼티에 대한 바인딩은 전혀 **Type safe** 하지 않다.
+
+```java
+@Value("${test.projectName}")
+String projectName;
+
+@Value("${test.version}")
+int version;
+
+@Value("${test.projectNameAndVersion}")
+String projectNameAndVersion;
+```
+
+
+
+@Value("${~~}") 안에 적는 외부 properties 의 key 값이 정확히 일치 해야 해당 변수에 바인딩 된다.
+
+
+
+이러한 경우 대신 자바 bean 스펙을 이용하여 객체에 직접 바인딩을 해줄 수 있다.
+
+![image](https://user-images.githubusercontent.com/64793712/104595029-57615d00-56b5-11eb-934a-1949f183020f.png)
+
+해당 prefix 값을 기억하자.
+
+
+
+그리고 바인딩 받을 수 있는 class 를 하나 만들자. **(프로퍼티 를 주입받기 위해선 Java Bean 스펙 준수)**
+
+```java
+public class Test {
+    private String projectName;
+    private int version;
+    private String projectNameAndVersion;
+    
+    //getter ,setter 추가
+}
+```
+
+class 이름은 마음대로 정해도 된다. 
+
+
+
+그리고 해당 class 위에 `@ConfigurationProperties` 애노테이션을 선언한다.
+
+![image](https://user-images.githubusercontent.com/64793712/104600271-20db1080-56bc-11eb-9f9f-03cf8abaeef2.png)
+
+그리고 아까 기억하고있는 prefix 값을 적어준다.
+
+그리고 해당 class 를 @Component 를 이용하여 Bean으로 등록해주면 끝이다.
+
+
+
+전체코드
+
+```java
+@Component
+@ConfigurationProperties("test")
+public class Test {
+
+    private String projectName;
+    private int version;
+    private String projectNameAndVersion;
+
+   //getter ,setter 추가
+}
+```
+
+|                              전                              |                              후                              |
+| :----------------------------------------------------------: | :----------------------------------------------------------: |
+| <img src="https://user-images.githubusercontent.com/64793712/104598562-10c23180-56ba-11eb-86d9-cfd8733d6162.png" alt="image" style="zoom:80%;" /> | ![image](https://user-images.githubusercontent.com/64793712/104599090-b5dd0a00-56ba-11eb-8f6f-90027f17c8b6.png) |
+
+
+
+
+
+또한 바인딩시 값에대한 검증도 같이 할 수 있다.
+
+ `@Validated` 애노테이션을 이용한 JSR-303 (@NotNull, ...)   검증 이 가능하다.
+
+
+
+**spring-boot 2.3 이후 부터는 의존성을 추가해줘야 합니다.**
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+
+
