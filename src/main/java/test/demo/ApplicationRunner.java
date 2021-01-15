@@ -1,5 +1,7 @@
 package test.demo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,8 @@ public class ApplicationRunner implements org.springframework.boot.ApplicationRu
 //    @Value("${test.projectNameAndVersion}")
 //    String projectNameAndVersion;
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Autowired
     Test test;
 
@@ -23,10 +27,9 @@ public class ApplicationRunner implements org.springframework.boot.ApplicationRu
     String hello;
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        System.out.println(test.getProjectName());
-        System.out.println(test.getVersion());
-        System.out.println(test.getProjectNameAndVersion());
+        logger.info("=================");
+        logger.info(hello);
+        logger.info("=================");
 
-        System.out.println(hello);
     }
 }
