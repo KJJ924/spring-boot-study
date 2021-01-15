@@ -19,10 +19,14 @@ public class ApplicationRunner implements org.springframework.boot.ApplicationRu
     @Autowired
     Test test;
 
+    @Autowired
+    String hello;
     @Override
     public void run(ApplicationArguments args) throws Exception {
         System.out.println(test.getProjectName());
         System.out.println(test.getVersion());
         System.out.println(test.getProjectNameAndVersion());
+
+        System.out.println(hello);
     }
 }

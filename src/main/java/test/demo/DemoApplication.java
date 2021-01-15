@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 public class DemoApplication {
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(DemoApplication.class);
-//        springApplication.setWebApplicationType(WebApplicationType.NONE);
+        springApplication.setWebApplicationType(WebApplicationType.NONE);
         springApplication.addListeners((ApplicationListener<ApplicationStartingEvent>) applicationEvent -> {
             System.out.println("이렇게 할수도 있어요");
         });
