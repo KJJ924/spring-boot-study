@@ -1032,5 +1032,77 @@ public class Test {
 </dependency>
 ```
 
+---
+
+## **프로파일**(@Profile)
+
+
+
+Spring 사용시 환경에 맞는 설정 파일을 @Profile() 애노테이션을 통해 Product  환경과 Test 환경에서 사용할
+
+Config 파일들을 구분 할 수 있었다.
+
+
+
+Spring-boot 에서도 마찬같이로 똑같이 기능을 사용할 수 있다.
+
+
+
+```java
+@Profile("test")
+@Configuration
+public class TestConfig {
+
+    @Bean
+    String hello(){
+        return "TestConfig";
+    }
+}
+```
+
+
+
+```java
+@Profile("product")
+@Configuration
+public class ProductConfig {
+
+    @Bean
+    String hello(){
+        return "ProductConfig";
+    }
+}
+```
+
+
+
+위와 같이 2개의 Config 파일이 존재 할때  실행환경마다 해당하는 Profile을 사용하고 싶다면.
+
+
+
+```properties
+spring.profiles.active=product
+```
+
+
+
+다음과 같이 application.properties 에  `spring.profiles.active`  key 값을  작성하면 된다.
+
+
+
+또한 `application.properties` 도 운영환경마다 사용할 설정파일을 지정할수 있는데 다음과 같은 패턴으로 작성하면된다.
+
+ `application-{profile}.properties`
+
+
+
+이렇게 선언후
+
+![image](https://user-images.githubusercontent.com/64793712/104732008-e2a72500-577f-11eb-84b9-c34e43704de1.png) 
+
+해당 부분에 어떤 profiles 를 사용할지 적어주면된다.
+
+
+
 
 
