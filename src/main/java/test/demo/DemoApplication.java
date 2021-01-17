@@ -13,10 +13,6 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class DemoApplication {
     public static void main(String[] args) {
-        SpringApplication springApplication = new SpringApplication(DemoApplication.class);
-        springApplication.addListeners((ApplicationListener<ApplicationStartingEvent>) applicationEvent -> {
-            System.out.println("이렇게 할수도 있어요");
-        });
-        springApplication.run(args);
+       SpringApplication.run(DemoApplication.class,args);
     }
 }
