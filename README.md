@@ -1459,7 +1459,7 @@ SampleService sampleService;
 ```java
 @Test
 void hello() throws Exception{
-    when(sampleService.getName()).thenReturn("mock Name");
+    when(sampleService.getName()).thenReturn("mock Name"); // Test에서 사용할 getName() 의 리턴 값을 결정!
     mockMvc.perform(get("/hello"))
             .andExpect(status().isOk())
             .andDo(print())
