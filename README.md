@@ -1298,4 +1298,344 @@ logback.xml 설정은 위에서 설명했으니 생략.
 
 
 
+---
+## **Test**
+
+
+
+우리는 Spring-boot 를 사용하면 대부분 WebApplication 을 개발 할 것이다.
+
+WebApplication을 개발 함에 있어 또한 대부분 MVC 패턴을 이용하여 개발을 진행한다.
+
+또한 개발을 진행함에 있어 Test 코드의 작성은 선택이 아닌 필수이다.
+
+
+
+Spring-boot는 Test를 작성함에있어 그렇게 어렵지 않으니 한번 알아보자.
+
+
+
+자 다음과 같은 SampleContoller와 SampleService 가 있다.
+
+
+
+```java
+@RestController
+public class SampleController {
+
+    @Autowired
+    SampleService sampleService;
+
+    @GetMapping("hello")
+    public String helloName(){
+        return sampleService.getName()+"hello";
+    }
+}
+```
+
+
+
+```java
+@Service
+public class SampleService {
+
+    public String getName(){
+        return "jaeJoon";
+    }
+}
+```
+
+
+
+SampleController 는 "/hello" 이라는 요청이 들어오면 SampleService 의 getName() 에서 jaeJoon 을 받아
+
+RestController 임으로 응답의 Body 부분에 jaeJoonhello 를 리턴 해 줄 것이다.
+
+
+
+이러한 흐름을 Test 코드를 통해 검증 하고 싶을때 다음과 같이 진행하면 된다.
+
+
+
+1. **`@SpringBootTest`**
+
+   -> 1-1)   webApplication 통합테스트를 진행한다.(default: 내장 톰캣을 사용하지 않고) 
+
+   ![image](https://user-images.githubusercontent.com/64793712/104846435-d953bf00-591d-11eb-8786-5e12f71ba3bb.png)
+
+   ​																위와 같이 Mock up된 웹환경을 조작하기 위해선 **MockMvc** 를 통한 조작을 해야함
+
+   -> 1-2)  Junit4 사용시 @RunWith(SpringRunner.class) 와 함께 사용해야함( Junit5 사용시 적용하지 않아도 됨)
+
+2. **`@AutoConfigureMockMvc`**
+
+   -> 위에서 말한 **MockMvc** 를 주입받기위한 애노테이션
+
+
+
+자 이제 활용해보자.
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class SampleControllerTest {
+    
+    @Autowired
+    MockMvc mockMvc;
+
+    @Test
+    void hello() throws Exception{
+    	// 테스트코드 작성 !
+    }
+}
+```
+
+
+
+이제 MockMvc의 Method를 알아보자.
+
+크게 다음 과 같이 3가지로 나눌 수 있다.
+
+1. `perform()`
+
+   ->  어떠한 요청을 실행 할 것인지 결정하는 Method (ex: get("url") , post("url") ,  put("url")  등등 )
+
+2. `andDo()`
+
+   -> 요청을 실행하면서 할 행동
+
+3. `andExpect()`
+
+   -> 요청의 기대값 비교
+
+대충 이렇게 설명 할 수 있는데 3가지 Method를 체이닝하여 이용한다.
+
+
+
+이제 이용해보면..
+
+```java
+@Test
+    void hello() throws Exception{
+        mockMvc.perform(get("/hello"))
+                .andDo(print())
+            	.andExpect(status().isOk())
+                .andExpect(content().string("jaeJoonhello"));
+    }
+}
+```
+
+다음과 같이 작성할수 있는데..
+
+
+
+ perform 안에있는 get() 이라는 Method는  org.springframework.test.web.servlet.request.MockMvcRequestBuilders  에서 온다.
+
+말그대로 get 요청으로 /hello 를 호출한다고 보면된다.
+
+또한 print() ,status() .content 들은
+
+org.springframework.test.web.servlet.result.MockMvcResultMatchers 에서 온 녀석들임으로 결과의 Response 값들을 출력하거나 확인할수있는 Method 들 이라고 생각하자.
+
+
+
+
+
+지금은 ApplicationContext 안에 들어 있는 Bean들을 그대로 이용하여  Test 코드를 작성했다.
+
+하지만 때때로 ApplicationContext  안에 있는 Bean들을 그대로 이용해서 Test 코드를 작성하기에 힘든경우가 발생할 수 있다.
+
+그러한 경우 ApplicationContext 안에 있는 Bean을 Mock Up 하여 Test 코드 환경에서 필요한 Bean을 주입 할 수 있다. 다음과 같이 작성하면된다.
+
+
+
+```java
+@MockBean
+SampleService sampleService;
+```
+
+일단 Mock up 할  클래스를 @MockBean 애노테이션을 붙여 선언 후
+
+```java
+@Test
+void hello() throws Exception{
+    when(sampleService.getName()).thenReturn("mock Name"); // Test에서 사용할 getName() 의 리턴 값을 결정!
+    mockMvc.perform(get("/hello"))
+            .andExpect(status().isOk())
+            .andDo(print())
+            .andExpect(content().string("mock Namehello"));
+}
+```
+
+다음과 같이 /hello 라는 요청이 들어와서 SampleService 에있는 getName을 호출하게되면 Test 코드에서 임시로 만든 Mock SampleService  주입하여 Test코드를 유연하게 짤수있다.
+
+
+
+이러한 기능은 통합테스트 환경이아닌 단위테스트 환경에서 더욱 큰힘을 발휘한다.
+
+
+
+앞서 말한 통합테스트 환경이아닌 단위테스트 환경으로 변경하기위해선 `@SpringBootTest` 가 아닌 `@WebMvcTest` 를 사용해보자.
+
+```java
+@WebMvcTest(SampleController.class)
+@AutoConfigureMockMvc
+class MockSampleControllerTest {
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @Test
+    void hello() throws Exception{
+        mockMvc.perform(get("/hello"))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(content().string("mock Namehello"));
+    }
+}
+```
+
+다음과 같이 `@WebMvcTest(SampleController.class)`   즉 SampleController 만  테스트를 진행하고 싶을때 
+
+이 상태로 실행하게 된다면 다음과 같은 오류를 만나보게 될 것이다.
+
+![image](https://user-images.githubusercontent.com/64793712/104847299-96e0b100-5922-11eb-8c22-5227fbba0c57.png)
+
+SampleService 의 Bean을 찾지 못하여 생기는 오류인데 당연히 통합테스트가아닌  단위테스트 임으로 SampleService 빈은 등록되지 않는다.
+
+이러한 경우 앞서 살펴보았던 MockBean 을이용하여 가짜Bean을 등록하여 테스트를 진행 할 수있다.
+
+
+
+```java
+@WebMvcTest(SampleController.class)
+@AutoConfigureMockMvc
+class MockSampleControllerTest {
+
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+   	SampleService sampleService;
+
+    @Test
+    void hello() throws Exception{
+        when(sampleService.getName()).thenReturn("mock Name");
+        mockMvc.perform(get("/hello"))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(content().string("mock Namehello"));
+    }
+}
+```
+
+
+
+앞서말한 단위테스트말고도 spring boot 는 더 많은 단위테스트를 제공함으로 자세히 알고 싶다면 spring boot doc 에서 test 부분을 살펴보자.
+
+https://docs.spring.io/spring-boot/docs/2.4.0/reference/html/appendix-test-auto-configuration.html#test-auto-configuration
+
+
+---
+## **Spring-boot  웹MVC 소개 , ViewResolver**
+
+
+
+이제 spring-boot 가 자동설정 하는 Configuration 중  WebMvcAutoConfiguration 에 대해 서 알아보자.
+
+
+
+WebMvcAutoConfiguration 은  SpringMvc 의 자동설정 Configuration 이며 Springboot 를 사용하면서 많은 자동설정들을 도와준다.
+
+
+
+Spring-boot 를 실행하면서 자동 설정을 확장하거나 재정의 하는 방법은 다음과 같이 진행하면 된다.
+
+
+
+1. #### **SpringMvc 확장**
+
+   ```java
+   @Configuration
+   public class WebConfig implements WebMvcConfigurer {
+       
+   }
+   ```
+
+   하나의 설정파일에  WebMvcConfigurer 를 구현하면된다.
+
+   여기서 WebMvcConfigurer 인터페이스가 제공하는 콜백 함수를 이용하여 사용자가 필요한 설정을 정의하면 된다.
+
+   ![image](https://user-images.githubusercontent.com/64793712/104929102-d1ac1d00-59e6-11eb-9780-1e9aeb3bac7e.png)
+
+   이와 같은  방법은 SpringMvc 의 자동설정을 유지하며 확장해서 기능을 추가 할 수 있기 때문에 이 방법을 추천한다.
+
+   
+
+   
+
+   
+
+2. #### **SpringMvc 재정의**
+
+   ```java
+   @Configuration
+   @EnableWebMvc
+   public class WebConfig implements WebMvcConfigurer {
+   
+   }
+   ```
+
+위 코드처럼 `@EnableWebMvc` 을 사용하게 된다면 Spring-boot 에서 제공해주는 자동설정은 사용하지않는다.
+
+해당 방법은 스프링부트가 제공해주는 편리한 자동설정을 사용할 수 없음으로 권장하지 않는다.
+
+
+
+
+
+### **ViewResolver** 
+
+스프링 부트를 이용하면  다음과 같이 전략을 선택 하여 등록할 수 있는데
+
+![image](https://user-images.githubusercontent.com/64793712/104933177-ed65f200-59eb-11eb-9fad-58f11472b892.png)
+
+
+
+이 중에서 ContentNegotiatingViewResolver 를 살펴보자.
+
+
+
+ContentNegotiatingViewResolver 은 요청 Headers 정보중  Accept 를 확인하여 원하는 Data를 내려줄 수 있다. 
+
+![image](https://user-images.githubusercontent.com/64793712/104935839-163bb680-59ef-11eb-9d76-54136f965669.png)
+
+[]: https://developer.mozilla.org/ko/docs/Web/HTTP/Headers/Accept	"Aceept 에 대한 링크"
+
+
+
+Test 코드로 보면 다음과 같다.
+
+
+
+```java
+ @Test
+    void getUser() throws Exception{
+        User user =new User("JaeJoon",26);
+        String content = objectMapper.writeValueAsString(user);
+
+        mockMvc.perform(post("/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(content))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name",is(equalTo("JaeJoon"))))
+                .andExpect(jsonPath("$.age",is(equalTo(26))));
+    }
+}
+```
+
+받고 싶은 data format 을 accept 에 선언 한다면 해당 format 이 서버에 준비되어있다면 요청을 받을 수 있다.
+
 
