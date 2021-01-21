@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1 th:text="${name}">name</h1>
+    <h1 th:text="${age}">age</h1>
+
+    <h1 th:text='#{jaejoon.name}'> properties value name</h1>
+    <h1 th:text='#{jaejoon.age}'>properties value age</h1>
+
+    <a href="#" th:href="@{'/testPage'}"> 페이지이동</a>
+</body>
+</html>
