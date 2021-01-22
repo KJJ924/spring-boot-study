@@ -43,15 +43,6 @@ public class SampleController {
         return "wellcome";
     }
 
-    @ExceptionHandler(NotFoundPage.class)
-    @ResponseBody
-    public ResponseEntity<ApiMessage> notFoundException(NotFoundPage notFoundPage){
-            ApiMessage apiMessage = new ApiMessage();
-            apiMessage.setInputValue(notFoundPage.getValue());
-            apiMessage.setMessage(notFoundPage.getMessage());
-            apiMessage.setStatusCode("404");
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiMessage);
-    }
 
 }
