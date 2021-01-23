@@ -1,12 +1,13 @@
 package test.demo.MVC;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import test.demo.MVC.config.ApiMessage;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Controller
 public class SampleController {
@@ -23,8 +24,11 @@ public class SampleController {
 
     @PostMapping("user")
     @ResponseBody
-    public User  getUser(@RequestBody User user){
-        return user;
+    public EntityModel<User>  getUser(@RequestBody User user){
+
+        return EntityModel.of(user,linkTo(methodOn(SampleController.class)
+                .getUser(user))
+                .withSelfRel());
     }
 
 

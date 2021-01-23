@@ -44,7 +44,9 @@ class SampleControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .content(content))
+                .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$._links.self").exists())
                 .andExpect(jsonPath("$.name",is(equalTo("JaeJoon"))))
                 .andExpect(jsonPath("$.age",is(equalTo(26))));
     }
