@@ -48,5 +48,10 @@ public class SampleController {
     }
 
 
+    @GetMapping("CORS")
+    @ResponseBody
+    public String cors(){
+        return "CORS";
+    }
 
 }
