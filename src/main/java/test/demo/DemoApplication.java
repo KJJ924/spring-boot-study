@@ -1,6 +1,6 @@
 package test.demo;
 
-import me.jaejoon.JaeJoon;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;

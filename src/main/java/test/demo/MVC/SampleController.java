@@ -16,7 +16,7 @@ public class SampleController {
     SampleService sampleService;
 
     @GetMapping("hello")
-
+    @ResponseBody
     public String helloName(){
         return sampleService.getName()+"hello";
     }
